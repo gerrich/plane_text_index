@@ -12,11 +12,11 @@ struct bi_stat_action_t {
     slice_t stat1 = get_stat(stat_map, index_map, w1); 
     slice_t stat2 = get_stat(stat_map, index_map, w2);
   
-    std::cout << "stat1: " << stat1 << std::endl;
-    std::cout << "stat2: " << stat2 << std::endl;
+    //std::cout << "stat1: " << stat1 << std::endl;
+    //std::cout << "stat2: " << stat2 << std::endl;
 
     double score = calc_similarity_score_slow(stat1, stat2);
-    std::cout << "score: " << score << std::endl;
+    std::cout << w1 << "\t" << w2 << "\t" << score << std::endl;
   }
   const mmap_t &stat_map;
   const mmap_t &index_map;
@@ -43,7 +43,7 @@ int main(int argc, const char **argv) {
   //std::cout << "lcount: " << lcount << std::endl;
 
   bi_stat_action_t action(stat_map, index_map);
-  process2fields(std::cin, std::cout, std::cerr, action); 
+  process_2str(std::cin, action); 
 
   if (stat_map.free()) {
     std::cerr << "failed to unmap file" << argv[1] << std::endl;

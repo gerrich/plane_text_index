@@ -57,7 +57,8 @@ slice_t lower_bound_line(char *data, size_t size, const slice_t &word, less_t &l
     middle_end = middle_end == NULL ? right_it : advance(middle_end, 1);
     
     slice_t middle_word(middle_it, distance(middle_it, middle_end));
-    
+   
+    /* 
     std::cout 
       << distance(left_it, middle_it) << " - "
       << (void*)middle_it << " " << (void*)middle_end << " " << distance(middle_it, middle_end)
@@ -66,7 +67,7 @@ slice_t lower_bound_line(char *data, size_t size, const slice_t &word, less_t &l
       << "][" << middle_word
       << "][" << slice_t(right_it, distance(right_it, right_end))
       << "] - [" << word << "]" << std::endl;
-    
+    */
     if (less(word, middle_word)) {
       if (middle_it == right_it) return lower_bound_line_naive(left_it, distance(left_it, right_end), word, less);
       right_it = middle_it;

@@ -12,58 +12,70 @@ struct offset_slice_t{
   size_t size;
 };
 
-struct slice_t {
-  slice_t() :ptr(NULL), size(0) {}
-  slice_t(char *_ptr, size_t _size) :ptr(_ptr), size(_size) {}
-  slice_t(const std::string &s) :ptr(const_cast<char*>(s.c_str())), size(s.size()) {}
+template <typename _size_type>
+struct base_slice_t {
+  typedef _size_type size_type;
 
-  bool operator == (const slice_t &rhs) const { return size == rhs.size && 0 == memcmp((void*)ptr, (void*)rhs.ptr, size); }
-  bool operator != (const slice_t &rhs) const { return !operator==(rhs);}
-  void assign(char *_ptr, size_t _size) {ptr = _ptr; size = _size;}
+  base_slice_t() :ptr(NULL), size(0) {}
+  base_slice_t(char *_ptr, _size_type _size) :ptr(_ptr), size(_size) {}
+  base_slice_t(const std::string &s) :ptr(const_cast<char*>(s.c_str())), size(s.size()) {}
+
+  bool operator == (const base_slice_t &rhs) const { return size == rhs.size && 0 == memcmp((void*)ptr, (void*)rhs.ptr, size); }
+  bool operator != (const base_slice_t &rhs) const { return !operator==(rhs);}
+  void assign(char *_ptr, _size_type _size) {ptr = _ptr; size = _size;}
   bool empty() const { return size == 0; }
   
-  const char& operator[](size_t index) const { return ptr[index]; }
-  char& operator[](size_t index) { return ptr[index]; }
+  const char& operator[](_size_type index) const { return ptr[index]; }
+  char& operator[](_size_type index) { return ptr[index]; }
   
   const char* begin() const { return ptr; } 
   char* begin() { return ptr; } 
   const char* end() const { return ptr + size; } 
   char* end() { return ptr + size; }
 
-  char *find(size_t offset, char ch) {
+  char *find(_size_type offset, char ch) {
     return (char*)memchr((void*)(&ptr[offset]), ch, size - offset); 
   }
-  const char *find(size_t offset, char ch) const {
+  const char *find(_size_type offset, char ch) const {
     return (char*)memchr((void*)(&ptr[offset]), ch, size - offset); 
   }
 
   char *ptr;
-  size_t size;
+  _size_type size;
 };
 
-std::ostream &operator << (std::ostream &os, const slice_t &slice) {
+template <typename _size_type>
+std::ostream &operator << (std::ostream &os, const base_slice_t<_size_type> &slice) {
   if (slice.size > 0) os.write(slice.ptr, slice.size);
   return os;
 }
 
-std::string make_str(const slice_t &slice) {
+template <typename _size_type>
+std::string make_str(const base_slice_t<_size_type> &slice) {
   return std::string(slice.ptr, slice.size);
 }
 
-int slicecmp(const slice_t &lhs, const slice_t &rhs) {
+template <typename _size_type>
+int slicecmp(const base_slice_t<_size_type> &lhs, const base_slice_t<_size_type> &rhs) {
   if (lhs.size < rhs.size) {
     int cmp_res = memcmp((void*)lhs.ptr, (void*)rhs.ptr, lhs.size);
-    return cmp_res == 0 ? -rhs.size : cmp_res;
+    return cmp_res == 0 ? -int(rhs.size) : cmp_res;
   } else {
     int cmp_res = memcmp((void*)lhs.ptr, (void*)rhs.ptr, rhs.size);
-    if (cmp_res == 0) return (lhs.size == rhs.size) ? 0 : lhs.size;
+    if (cmp_res == 0) return (lhs.size == rhs.size) ? 0 : int(lhs.size);
     return cmp_res;
   }
 }
 
-bool operator < (const slice_t &lhs, const slice_t &rhs) { return slicecmp(lhs, rhs) < 0; }
-bool operator <= (const slice_t &lhs, const slice_t &rhs) { return slicecmp(lhs, rhs) <= 0; }
-bool operator > (const slice_t &lhs, const slice_t &rhs) { return slicecmp(lhs, rhs) > 0; }
-bool operator >= (const slice_t &lhs, const slice_t &rhs) { return slicecmp(lhs, rhs) >= 0; }
+template <typename _size_type>
+bool operator < (const base_slice_t<_size_type> &lhs, const base_slice_t<_size_type> &rhs) { return slicecmp(lhs, rhs) < 0; }
+template <typename _size_type>
+bool operator <= (const base_slice_t<_size_type> &lhs, const base_slice_t<_size_type> &rhs) { return slicecmp(lhs, rhs) <= 0; }
+template <typename _size_type>
+bool operator > (const base_slice_t<_size_type> &lhs, const base_slice_t<_size_type> &rhs) { return slicecmp(lhs, rhs) > 0; }
+template <typename _size_type>
+bool operator >= (const base_slice_t<_size_type> &lhs, const base_slice_t<_size_type> &rhs) { return slicecmp(lhs, rhs) >= 0; }
+
+typedef base_slice_t<size_t> slice_t;
 
 #endif

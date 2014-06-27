@@ -20,6 +20,10 @@
 #include <iostream>
 #include <ostream>
 
+#include <cstdio>
+// TODO change with propriate error logger
+//void perror(const char*) {}
+
 struct mmap_t {
   mmap_t()
     :fd(-1)
@@ -135,7 +139,7 @@ struct word_start_record_less_t {
   bool operator()(const slice_t &lhs, const slice_t &rhs) const {
     slice_t lpfx(lhs.ptr, either(lhs.find(0, '\t'), (const char*)(lhs.ptr + lhs.size)) - lhs.ptr);
     slice_t rpfx(rhs.ptr, either(rhs.find(0, '\t'), (const char*)(rhs.ptr + rhs.size)) - rhs.ptr);
-    std::cout << "less(" << lpfx << "," << rpfx << ")" << std::endl;
+//    std::cout << "less(" << lpfx << "," << rpfx << ")" << std::endl;
     return operator < (lpfx, rpfx);
   }
 };
@@ -144,30 +148,20 @@ const slice_t get_stat(const mmap_t &map, const mmap_t &idx_map, const slice_t &
   static slice_t empty_slice;
   word_start_record_less_t less;
   slice_t lb = lower_bound_line((char*)idx_map.data, idx_map.size, word, less); 
-  std::cout << "LB: [" << lb << "]" << std::endl;
   if (less(word, lb)) {
-    std::cout << ".1" << std::endl;
     return empty_slice;
   }
   char *it = (char*)memchr((void*)lb.ptr, '\t', lb.size);
-    std::cout << ".2" << std::endl;
   if (!it) return empty_slice;
-    std::cout << ".3" << std::endl;
   it = it + 1;
   size_t offset;
-    std::cout << ".4" << std::endl;
   if (read_num(it, lb.size - distance(lb.ptr, it), offset)) return empty_slice;
-    std::cout << ".5" << std::endl;
   
   char *it2 = (char*)memchr((void*)it, '\t', lb.size - distance(lb.ptr, it));
-    std::cout << ".6" << std::endl;
   if (!it2) return empty_slice;
-    std::cout << ".7" << std::endl;
   it2 = it2 + 1;
   size_t len;
-    std::cout << ".8" << std::endl;
   if (read_num(it2, lb.size - distance(lb.ptr, it2), len)) return empty_slice;
-    std::cout << ".9 "<< offset << " " << len << std::endl;
 
   return slice_t((char*)map.data + offset, len);
 }
@@ -198,7 +192,7 @@ double calc_similarity_score_slow(const slice_t &stat1, const slice_t &stat2) {
 
   double sum1 = 0.0f;
   double sum2 = 0.0f;
-  slice_t END_WORD("$", 1);
+  slice_t END_WORD(const_cast<char*>("$"), 1);
   for (slice_reader_t r1(stat1); !r1.empty(); r1.next()) {
     slice_t line = r1.get();
     slice_t w1, w2;
@@ -207,7 +201,7 @@ double calc_similarity_score_slow(const slice_t &stat1, const slice_t &stat2) {
       continue;
     }
     if (w2 == END_WORD) {
-      std::cout << "ignore " << w2 << std::endl;
+      //std::cout << "ignore " << w2 << std::endl;
       continue;
     }
     freq_map1.insert(std::make_pair(w2,count));
@@ -223,7 +217,7 @@ double calc_similarity_score_slow(const slice_t &stat1, const slice_t &stat2) {
       continue;
     }
     if (w2 == END_WORD) {
-      std::cout << "ignore " << w2 << std::endl;
+      //std::cout << "ignore " << w2 << std::endl;
       continue;
     }
     freq_map2.insert(std::make_pair(w2,count));
