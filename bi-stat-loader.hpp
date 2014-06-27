@@ -4,6 +4,8 @@
 #include "ptr_tools.hpp"
 #include "slice.hpp"
 #include "slice-reader.hpp"
+#include "algo.hpp"
+#include "my-io.hpp"
 
 #include <string>
 #include <map>
@@ -91,16 +93,16 @@ size_t calc_lines(void *data, size_t size) {
 typedef std::map<std::string, slice_t> slice_map_t;
 
 struct ordered_bi_reader_t {
-  ordered_bi_reader_t(slice_map_t &_slice_map)
+  ordered_bi_reader_t(const char *_data_begin)
     :chunk_begin(NULL)
     ,chunk_size(0)
-    ,slice_map(_slice_map) {}
+    ,data_begin(_data_begin) {}
 
   void commit_chunk() {
     if (!chunk_begin) return;
-    slice_t chunk(chunk_begin, chunk_size);
-    slice_map.insert(std::make_pair(make_str(last_word), chunk));
-//    std::cout << "insert(" << last_word << "," << chunk <<")" << std::endl; 
+//    slice_t chunk(chunk_begin, chunk_size);
+//    slice_map.insert(std::make_pair(make_str(last_word), chunk));
+    std::cout << last_word << "\t" << distance(data_begin, chunk_begin) << "\t" << chunk_size << std::endl; 
   }
   void process(void *data, size_t size) {
     void *space_ptr = memchr(data, ' ', size);
@@ -118,53 +120,66 @@ struct ordered_bi_reader_t {
   void commit() {commit_chunk();}
 
   slice_t last_word;
-  char *chunk_begin;
+  const char *chunk_begin;
   size_t chunk_size; 
-  slice_map_t &slice_map;
+  const char *data_begin;
 };
 
-struct bi_stat_t {
-  int init(const mmap_t &_map) {
-    map_ptr = &_map;
-    ordered_bi_reader_t action(slice_map);
-    process_lines(map_ptr->data, map_ptr->size, action);
-    return 0;
-  }
-
-  const slice_t& get_stat(const std::string &word) const {
-    slice_map_t::const_iterator it = slice_map.find(word);
-    if (it == slice_map.end()) return empty_slice;
-    return it->second;
-  }
-
-  slice_map_t slice_map;
-  slice_t empty_slice;
-  const mmap_t *map_ptr;
-};
-
-template <typename data_t>
-int read_num(const char *data, size_t size, data_t &res) {
-  res = 0;
-  size_t char_read = 0;
-  const data_t base = 10;
-  for(size_t i = 0; i < size; ++i) {
-    if (data[i] >= '0' and data[i] <= '9') break;
-  }
-  
-  for(size_t i = 0; i < size; ++i) {
-    if (data[i] < '0' or data[i] > '9') break;
-    res = res * base + data[i] - '0';
-    ++char_read;
-  }
-  return char_read > 0 ? 0 : -1;
+void build_bi_stat_index(const mmap_t &map) {
+  ordered_bi_reader_t action((const char*)map.data);
+  process_lines(map.data, map.size, action);
 }
+
+struct word_start_record_less_t {
+  // compare parts of slices before space
+  bool operator()(const slice_t &lhs, const slice_t &rhs) const {
+    slice_t lpfx(lhs.ptr, either(lhs.find(0, '\t'), (const char*)(lhs.ptr + lhs.size)) - lhs.ptr);
+    slice_t rpfx(rhs.ptr, either(rhs.find(0, '\t'), (const char*)(rhs.ptr + rhs.size)) - rhs.ptr);
+    std::cout << "less(" << lpfx << "," << rpfx << ")" << std::endl;
+    return operator < (lpfx, rpfx);
+  }
+};
+
+const slice_t get_stat(const mmap_t &map, const mmap_t &idx_map, const slice_t &word) {
+  static slice_t empty_slice;
+  word_start_record_less_t less;
+  slice_t lb = lower_bound_line((char*)idx_map.data, idx_map.size, word, less); 
+  std::cout << "LB: [" << lb << "]" << std::endl;
+  if (less(word, lb)) {
+    std::cout << ".1" << std::endl;
+    return empty_slice;
+  }
+  char *it = (char*)memchr((void*)lb.ptr, '\t', lb.size);
+    std::cout << ".2" << std::endl;
+  if (!it) return empty_slice;
+    std::cout << ".3" << std::endl;
+  it = it + 1;
+  size_t offset;
+    std::cout << ".4" << std::endl;
+  if (read_num(it, lb.size - distance(lb.ptr, it), offset)) return empty_slice;
+    std::cout << ".5" << std::endl;
+  
+  char *it2 = (char*)memchr((void*)it, '\t', lb.size - distance(lb.ptr, it));
+    std::cout << ".6" << std::endl;
+  if (!it2) return empty_slice;
+    std::cout << ".7" << std::endl;
+  it2 = it2 + 1;
+  size_t len;
+    std::cout << ".8" << std::endl;
+  if (read_num(it2, lb.size - distance(lb.ptr, it2), len)) return empty_slice;
+    std::cout << ".9 "<< offset << " " << len << std::endl;
+
+  return slice_t((char*)map.data + offset, len);
+}
+
+
 int read_bi_stat_line(const slice_t &slice, slice_t &w1, slice_t &w2, size_t &count) {
   const char* it1 = slice.find(0, ' ');
   if (!it1) return -1;
-  w2.assign(slice.ptr, it1 + 1 - slice.ptr);
-  const char* it2 = slice.find(it1 + 1 - slice.ptr, '\t');
+  w1.assign(slice.ptr, distance(slice.ptr, it1));
+  const char* it2 = slice.find(distance(slice.ptr, it1) + 1, '\t');
   if (!it2) return -1;
-  w2.assign(const_cast<char*>(it1 + 1), it2 - it1);
+  w2.assign(const_cast<char*>(it1 + 1), distance(it1, it2) - 1);
   if (read_num(it2 + 1, slice.size - (it2 + 1 - slice.ptr), count)) {
     return -1;
   }
@@ -183,11 +198,16 @@ double calc_similarity_score_slow(const slice_t &stat1, const slice_t &stat2) {
 
   double sum1 = 0.0f;
   double sum2 = 0.0f;
+  slice_t END_WORD("$", 1);
   for (slice_reader_t r1(stat1); !r1.empty(); r1.next()) {
     slice_t line = r1.get();
     slice_t w1, w2;
     size_t count;
     if (read_bi_stat_line(line, w1, w2, count)) {
+      continue;
+    }
+    if (w2 == END_WORD) {
+      std::cout << "ignore " << w2 << std::endl;
       continue;
     }
     freq_map1.insert(std::make_pair(w2,count));
@@ -200,6 +220,10 @@ double calc_similarity_score_slow(const slice_t &stat1, const slice_t &stat2) {
     slice_t w1, w2;
     size_t count;
     if (read_bi_stat_line(line, w1, w2, count)) {
+      continue;
+    }
+    if (w2 == END_WORD) {
+      std::cout << "ignore " << w2 << std::endl;
       continue;
     }
     freq_map2.insert(std::make_pair(w2,count));

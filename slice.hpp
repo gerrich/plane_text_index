@@ -15,7 +15,8 @@ struct offset_slice_t{
 struct slice_t {
   slice_t() :ptr(NULL), size(0) {}
   slice_t(char *_ptr, size_t _size) :ptr(_ptr), size(_size) {}
-  
+  slice_t(const std::string &s) :ptr(const_cast<char*>(s.c_str())), size(s.size()) {}
+
   bool operator == (const slice_t &rhs) const { return size == rhs.size && 0 == memcmp((void*)ptr, (void*)rhs.ptr, size); }
   bool operator != (const slice_t &rhs) const { return !operator==(rhs);}
   void assign(char *_ptr, size_t _size) {ptr = _ptr; size = _size;}
@@ -52,10 +53,10 @@ std::string make_str(const slice_t &slice) {
 int slicecmp(const slice_t &lhs, const slice_t &rhs) {
   if (lhs.size < rhs.size) {
     int cmp_res = memcmp((void*)lhs.ptr, (void*)rhs.ptr, lhs.size);
-    return cmp_res == 0 ? lhs.size : cmp_res;
+    return cmp_res == 0 ? -rhs.size : cmp_res;
   } else {
     int cmp_res = memcmp((void*)lhs.ptr, (void*)rhs.ptr, rhs.size);
-    if (cmp_res == 0) return (lhs.size == rhs.size) ? 0 : -rhs.size;
+    if (cmp_res == 0) return (lhs.size == rhs.size) ? 0 : lhs.size;
     return cmp_res;
   }
 }
