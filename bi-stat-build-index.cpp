@@ -1,5 +1,5 @@
 #include "bi-stat-loader.hpp"
-#include "../include/io/io.hpp"
+#include "io.hpp"
 
 #include <iostream>
 
