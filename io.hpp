@@ -1,5 +1,5 @@
-#ifndef CHELL_SPECKER_IO_H
-#define CHELL_SPECKER_IO_H
+#ifndef IO_H
+#define IO_H
 
 #include <iostream>
 #include <string>
