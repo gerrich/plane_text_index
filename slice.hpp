@@ -20,7 +20,12 @@ struct base_slice_t {
   base_slice_t(char *_ptr, _size_type _size) :ptr(_ptr), size(_size) {}
   base_slice_t(const std::string &s) :ptr(const_cast<char*>(s.c_str())), size(s.size()) {}
 
-  bool operator == (const base_slice_t &rhs) const { return size == rhs.size && 0 == memcmp((void*)ptr, (void*)rhs.ptr, size); }
+  bool operator == (const base_slice_t &rhs) const {
+    return size == rhs.size &&
+      (ptr != NULL && rhs.ptr != NULL) ?
+        (0 == memcmp((void*)ptr, (void*)rhs.ptr, size)) :
+        ((ptr == NULL) && (rhs.ptr == NULL));
+  }
   bool operator != (const base_slice_t &rhs) const { return !operator==(rhs);}
   void assign(char *_ptr, _size_type _size) {ptr = _ptr; size = _size;}
   bool empty() const { return size == 0; }

@@ -2,9 +2,32 @@
 #define JAIL_ALGO_HPP 1
 
 #include "slice.hpp"
-
+#include "ptr_tools.hpp"
 #include <cstring>
 #include <iostream>
+
+// return empty_slice on valid order
+// firs inorder occurence overwise
+template <typename less_t> 
+slice_t check_order(char* data, size_t size, less_t &less) {
+  char *it = data;
+  char* end = advance(data, size);
+  size_t offset = 0;
+  static char empty_str[] = ""; 
+  slice_t prev_word(empty_str, 0);
+  for (;it != end ;) {
+    char* new_it = (char*) memchr(it, '\n', distance(it, end));
+    new_it = new_it ? advance(new_it,1) : end;   
+    
+    slice_t current_word(it, distance(it, new_it) - (new_it == end ? 0 : 1));
+    if (less(current_word, prev_word)) {
+      return current_word;
+    }
+    prev_word = current_word;
+    it = new_it;
+  }
+  return slice_t();
+}
 
 void *memrchr(void* data, char ch, size_t size) {
   if(!size) return NULL;

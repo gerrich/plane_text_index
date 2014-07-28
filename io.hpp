@@ -20,6 +20,28 @@ void process_lines(
   }
 }
 
+
+template <typename action_t>
+struct line_1str_adapter_t {
+  line_1str_adapter_t(action_t &_action)
+    :action(_action) {}
+
+  void operator()(const std::string &line) {
+    action(line);
+  }
+
+  action_t &action;
+};
+
+template <typename action_t>
+void process_1str(
+    std::istream &is,
+    action_t &action
+) {
+  line_1str_adapter_t<action_t> line_action(action);
+  process_lines(is, line_action); 
+}
+
 template <typename action_t>
 struct line_2str_adapter_t {
   line_2str_adapter_t(action_t &_action)
