@@ -57,46 +57,129 @@ TEST(slice_map, check_order) {
     std::cout << "disorder_slice: " << make_str(disorder_slice) << std::endl;
   }
   EXPECT_TRUE(slice_t() == disorder_slice);
+}
+
+TEST(slice_map, check_lb_long) {
+  std::string data;
+  
+  for (size_t i = 0; i < 1; ++i) data += "a\n";  
+  for (size_t i = 1; i < 1000; ++i) data += "b\n";  
+  for (size_t i = 0; i < 1; ++i) data += "c";  
+  slice_less_t less;
+
+  {
+    slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"a", 1), less);
+    EXPECT_TRUE(lb == slice_t(&data[0], 1));
+
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"a", 1), less);
+    std::cout << distance(&data[0], ub.ptr) << ":" << ub.size << "\t" << make_str(ub) << std::endl;
+    EXPECT_TRUE(ub == slice_t(&data[2], 1));
+  }
+  {
+    slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"b", 1), less);
+    EXPECT_TRUE(lb == slice_t(&data[2], 1));
+    
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"b", 1), less);
+    std::cout << distance(&data[0], ub.ptr) << ":" << ub.size << "\t" << make_str(ub) << std::endl;
+    EXPECT_TRUE(ub == slice_t(&data[2000], 1));
+  }
+  {
+    slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"c", 1), less);
+    EXPECT_TRUE(lb == slice_t(&data[2000], 1));
+    
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"c", 1), less);
+    std::cout << distance(&data[0], ub.ptr) << ":" << ub.size << "\t" << make_str(ub) << std::endl;
+    EXPECT_TRUE(ub == slice_t());
+  }
+}
+
+TEST(slice_map, check_lb_ub) {
+  std::string data("a\na\nc\nc\nc\nc\nc\nc\nf\nf\nf");
+  slice_less_t less;
+
+  {
+    slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"a", 1), less);
+    EXPECT_TRUE(lb == slice_t(&data[0], 1));
+    
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"a", 1), less);
+    EXPECT_TRUE(ub == slice_t(&data[4], 1));
+  }
+  {
+    slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"b", 1), less);
+    EXPECT_TRUE(lb == slice_t(&data[4], 1));
+    
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"b", 1), less);
+    EXPECT_TRUE(ub == slice_t(&data[4], 1));
+  }
+  {
+    slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"c", 1), less);
+    EXPECT_TRUE(lb == slice_t(&data[4], 1));
+    
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"c", 1), less);
+    EXPECT_TRUE(ub == slice_t(&data[16], 1));
+  }
+  {
+    slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"d", 1), less);
+    EXPECT_TRUE(lb == slice_t(&data[16], 1));
+    
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"d", 1), less);
+    EXPECT_TRUE(ub == slice_t(&data[16], 1));
+  }
+}
+
+TEST(slice_map, check_lb_ub_2) {
+  std::string data("aa\nab\nab\nab\naba\naba\nabb\nbb\nbb");
+  slice_less_t less;
 
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"a", 1), less);
     std::cout << distance(&data[0], lb.ptr) << ":" << lb.size << "\t" << make_str(lb) << std::endl;
-    EXPECT_TRUE(lb == slice_t(&data[0], 3));
+    EXPECT_TRUE(lb == slice_t(&data[0], 2));
+    
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"a", 1), less);
+    EXPECT_TRUE(ub == slice_t(&data[0], 2));
   }
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"aa", 2), less);
-    EXPECT_TRUE(lb == slice_t(&data[0], 3));
+    EXPECT_TRUE(lb == slice_t(&data[0], 2));
+    
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"aa", 2), less);
+    std::cout << distance(&data[0], ub.ptr) << ":" << ub.size << "\t" << make_str(ub) << std::endl;
+    EXPECT_TRUE(ub == slice_t(&data[3], 2));
   }
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"aaa", 3), less);
-    EXPECT_TRUE(lb == slice_t(&data[3], 3));
+    EXPECT_TRUE(lb == slice_t(&data[3], 2));
+    
+    slice_t ub = upper_bound_line(&data[0], data.size(), slice_t((char*)"aaa", 3), less);
+    EXPECT_TRUE(ub == slice_t(&data[3], 2));
   }
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"ab", 2), less);
-    EXPECT_TRUE(lb == slice_t(&data[3], 3));
+    EXPECT_TRUE(lb == slice_t(&data[3], 2));
   }
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"ab_", 3), less);
     std::cout << distance(&data[0], lb.ptr) << ":" << lb.size << "\t" << make_str(lb) << std::endl;
-    EXPECT_TRUE(lb == slice_t(&data[12], 4));
+    EXPECT_TRUE(lb == slice_t(&data[12], 3));
   }
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"aba", 3), less);
     std::cout << distance(&data[0], lb.ptr) << ":" << lb.size << "\t" << make_str(lb) << std::endl;
-    EXPECT_TRUE(lb == slice_t(&data[12], 4));
+    EXPECT_TRUE(lb == slice_t(&data[12], 3));
   }
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"abb", 3), less);
     std::cout << distance(&data[0], lb.ptr) << ":" << lb.size << "\t" << make_str(lb) << std::endl;
-    EXPECT_TRUE(lb == slice_t(&data[20], 4));
+    EXPECT_TRUE(lb == slice_t(&data[20], 3));
   }
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"b", 1), less);
-    EXPECT_TRUE(lb == slice_t(&data[24], 3));
+    EXPECT_TRUE(lb == slice_t(&data[24], 2));
   }
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"bb", 2), less);
-    EXPECT_TRUE(lb == slice_t(&data[24], 3));
+    EXPECT_TRUE(lb == slice_t(&data[24], 2));
   }
   {
     slice_t lb = lower_bound_line(&data[0], data.size(), slice_t((char*)"bbb", 3), less);

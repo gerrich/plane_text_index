@@ -4,6 +4,7 @@
 #include "ptr_tools.hpp"
 #include "slice.hpp"
 #include "slice-reader.hpp"
+#include "tools.hpp"
 #include "algo.hpp"
 #include "my-io.hpp"
 
@@ -133,16 +134,6 @@ void build_bi_stat_index(const mmap_t &map) {
   ordered_bi_reader_t action((const char*)map.data);
   process_lines(map.data, map.size, action);
 }
-
-struct word_start_record_less_t {
-  // compare parts of slices before space
-  bool operator()(const slice_t &lhs, const slice_t &rhs) const {
-    slice_t lpfx(lhs.ptr, either(lhs.find(0, '\t'), (const char*)(lhs.ptr + lhs.size)) - lhs.ptr);
-    slice_t rpfx(rhs.ptr, either(rhs.find(0, '\t'), (const char*)(rhs.ptr + rhs.size)) - rhs.ptr);
-//    std::cout << "less(" << lpfx << "," << rpfx << ")" << std::endl;
-    return operator < (lpfx, rpfx);
-  }
-};
 
 const slice_t get_stat(const mmap_t &map, const mmap_t &idx_map, const slice_t &word) {
   static slice_t empty_slice;

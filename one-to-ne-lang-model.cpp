@@ -1,5 +1,6 @@
 #include "bi-stat-loader.hpp"
 #include "io.hpp"
+#include "tools.hpp"
 
 #include <iostream>
 
@@ -42,8 +43,10 @@ struct one_to_one_lm_action_t {
       size_t right = left;
       for (; right < left + max_len and  right < slices.size(); ++right) {
         std::string word = std::string(str, slices[left].offset, sum_slice_len(&slices[left], &slices[right]));
-        lb = lower_bound(replacement_map, word);
-        ub = upper_bound(replacement_map, word);
+        
+        word_start_record_less_t less;
+        slice_t lb = lower_bound_line((char*)replacement_map.data, replacement_map.size, word, less);
+        slice_t ub = upper_bound_line((char*)replacement_map.data, replacement_map.size, word, less);
         
         if (lb != ub) {// not found ->next word
           action(word, fix, freq);
