@@ -5,9 +5,15 @@
 #include <iostream>
 
 // split by word boundary 
-void split_string_simple(const std::string, std::vector<offset_slice_t> &result) {
+void split_string_simple(const std::string & str, std::vector<offset_slice_t> &result) {
   // do something
   return;
+}
+
+// split by word boundaries
+void split_by_spaces(const std::string & str, std::vector<offset_slice_t> & slices) {
+  for (size_t i = 0; i < str.size(); ++i) {
+  }
 }
 
 template <typename it_t>
@@ -49,6 +55,8 @@ struct one_to_one_lm_action_t {
         slice_t ub = upper_bound_line((char*)replacement_map.data, replacement_map.size, word, less);
         
         if (lb != ub) {// not found ->next word
+          slice_t fix; // TODO read fix & freq from slice
+          size_t freq = 1;
           action(word, fix, freq);
         } else {
           break;
@@ -67,16 +75,16 @@ struct one_to_one_lm_action_t {
     // compare variants using freq stats of ngram surrouding the slice
 
     // 1.0 
-    std::vector<slice_t> slices;
+    std::vector<offset_slice_t> slices;
     split_by_spaces(str, slices);
     
-    for (size_t i = 0; i < slices; ++i) {
-      const slice_t & slice = slices[i];
+    for (size_t i = 0; i < slices.size(); ++i) {
+      const offset_slice_t & slice = slices[i];
       slice_t fix;
       size_t freq;
-      if (find_replacement(replacement_map, slice, fix, freq)) {
+      //if (find_replacement(replacement_map, slice, fix, freq)) {
         //compare fix with original variant -> delta weight
-      }
+      //}
     }
 
     std::cout << str << "\t" << fix << std::endl;    
