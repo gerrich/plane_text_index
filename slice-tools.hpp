@@ -10,7 +10,7 @@
 inline const char * find_nth_char(const slice_t & slice, size_t offset, char ch, size_t n) {
   const char * pos = NULL;
   for(size_t i = 0; i < n; ++i) {
-    const char *pos = slice.find(offset, ch);
+    pos = slice.find(offset, ch);
     if (pos == NULL) return NULL;
     offset = distance(slice.ptr, pos) + 1;
   }
