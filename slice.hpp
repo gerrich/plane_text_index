@@ -45,6 +45,7 @@ struct base_slice_t {
     return (char*)memchr((void*)(&ptr[offset]), ch, size - offset); 
   }
 
+
   char *ptr;
   _size_type size;
 };

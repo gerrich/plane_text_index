@@ -4,9 +4,11 @@
 #include "ptr_tools.hpp"
 #include "slice.hpp"
 #include "slice-reader.hpp"
-#include "tools.hpp"
+#include "slice-tools.hpp"
 #include "algo.hpp"
 #include "my-io.hpp"
+#include "action-io.hpp"
+#include "mmap.hpp"
 
 #include <string>
 #include <map>
@@ -14,9 +16,6 @@
 
 #include <cstring>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/mman.h>
 
 #include <iostream>
 #include <ostream>
@@ -25,64 +24,7 @@
 // TODO change with propriate error logger
 //void perror(const char*) {}
 
-struct mmap_t {
-  mmap_t()
-    :fd(-1)
-    ,data(NULL) {}
- 
-  // return 0 on success
-  int load(const char *fname) {
-    fd = open(fname, O_RDONLY);
-    if (fd == -1) {
-      perror("Error opening file for reading");
-      return -1;    
-    }
 
-    struct stat st;
-    fstat(fd, &st);
-    size = st.st_size;
-
-    data = mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
-    if (data == MAP_FAILED) {
-      close(fd);
-      perror("Error mmapping the file");
-      return -1;
-    }
-    
-    return 0;  
-  }
-  
-  // returns 0 on success
-  int free() {
-    if (munmap(data, size) == -1) {
-      perror("Error un-mmapping the file");
-      return -1;
-    }
-    close(fd);
-    return 0;
-  }
-  int fd;
-  void *data;
-  size_t size;
-};
-
-template <typename action_t>
-void process_lines(void *data, size_t size, action_t &action) {
-  size_t size_left = size;
-  void *it = data;
-  for (; size_left > 0;) {
-    void *pos = memchr(it, '\n', size_left);
-    if (!pos) {
-      action.process(it, size_left);
-      break;
-    }
-    pos = advance(pos, 1);
-    action.process(it, (char*)pos - (char*)it); 
-    size_left -= (char*)pos - (char*)it;
-    it = pos;
-  }
-  action.commit();
-}
 struct line_counter_t {
   line_counter_t(): count(0) {}
   void process(void *data, size_t size) {++count;}

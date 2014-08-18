@@ -29,7 +29,7 @@ slice_t check_order(char* data, size_t size, less_t &less) {
   return slice_t();
 }
 
-void *memrchr(void* data, char ch, size_t size) {
+inline void *memrchr(void* data, char ch, size_t size) {
   if(!size) return NULL;
   const char *it = (const char*)data + size - 1;
   const char *rend = (const char*)data - 1;
@@ -80,7 +80,7 @@ slice_t lower_bound_line_impl(char *data, size_t size, const slice_t &word, less
 
   lt2le<less_t> le(less);
   while (left_it != right_it) {
-    std::cout << distance(data, left_it) << " + " << distance(left_it, left_end) <<  " <-> " << distance(data, right_it) << " + " << distance(right_it, right_end) << std::endl;
+    //std::cout << distance(data, left_it) << " + " << distance(left_it, left_end) <<  " <-> " << distance(data, right_it) << " + " << distance(right_it, right_end) << std::endl;
     size_t dist = distance(left_it, right_it);
     char *middle_it = (char*)memrchr(left_it, '\n', dist / 2);
     

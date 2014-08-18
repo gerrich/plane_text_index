@@ -1,10 +1,12 @@
-#ifndef IO_H
-#define IO_H
+#ifndef ACTION_IO_HPP
+#define ACTION_IO_HPP
 
 #include <iostream>
 #include <string>
 #include <vector>
 #include <cstdio>
+
+#include "ptr_tools.hpp"
 
 template <typename action_t>
 void process_lines(
@@ -20,6 +22,23 @@ void process_lines(
   }
 }
 
+template <typename action_t>
+void process_lines(void *data, size_t size, action_t &action) {
+  size_t size_left = size;
+  void *it = data;
+  for (; size_left > 0;) {
+    void *pos = memchr(it, '\n', size_left);
+    if (!pos) {
+      action.process(it, size_left);
+      break;
+    }
+    pos = advance(pos, 1);
+    action.process(it, (char*)pos - (char*)it); 
+    size_left -= (char*)pos - (char*)it;
+    it = pos;
+  }
+  action.commit();
+}
 
 template <typename action_t>
 struct line_1str_adapter_t {
@@ -130,4 +149,38 @@ void process_2str_sz(
   process_lines(is, line_action); 
 }
 
+template <typename action_t>
+struct line_1str_sz_adapter_t {
+  line_1str_sz_adapter_t(action_t &_action)
+    :action(_action) {}
+
+  void operator()(const std::string &line) {
+    if (line.empty()) {
+//      action(std::string(), std::string(), 1);
+      return;
+    }
+    size_t tab_pos = line.find('\t');
+    if (tab_pos == std::string::npos) {
+//      action(line, std::string(), 1);
+      return;
+    }
+    std::string f1(line,0, tab_pos);
+    
+    std::string tail(line, tab_pos + 1);
+    size_t count = 0;
+    if (1 != sscanf(tail.c_str(), "%zu", &count)) return;
+    action(f1, count);
+  }
+
+  action_t &action;
+};
+
+template <typename action_t>
+void process_1str_sz(
+    std::istream &is,
+    action_t &action
+) {
+  line_1str_sz_adapter_t<action_t> line_action(action);
+  process_lines(is, line_action); 
+}
 #endif
