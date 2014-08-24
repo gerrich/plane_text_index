@@ -3,9 +3,9 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 include_directories(${CMAKE_INCLUDE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../gtest-svn/include/)
 LINK_DIRECTORIES(${CMAKE_LIBRARY_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../gtest-svn)
 
-add_executable(bi-stat-score bi-stat-score.cpp)
-add_executable(bi-stat-build-index bi-stat-build-index.cpp)
-add_executable(one-to-ne-lang-model one-to-ne-lang-model.cpp)
+add_executable(bi-stat-score bi-stat-score.cpp bi-stat-loader.cpp)
+add_executable(bi-stat-build-index bi-stat-build-index.cpp bi-stat-loader.cpp)
+add_executable(one-to-ne-lang-model one-to-ne-lang-model.cpp bi-stat-loader.cpp)
 add_executable(check_upper_bound check_upper_bound.cpp)
 
 enable_testing()

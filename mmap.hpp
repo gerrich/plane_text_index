@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <cstdio> // perror
 
 struct mmap_t {
   mmap_t()

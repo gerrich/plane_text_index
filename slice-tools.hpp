@@ -23,7 +23,7 @@ struct word_start_record_less_t {
   bool operator()(const slice_t &lhs, const slice_t &rhs) const {
     slice_t lpfx(lhs.ptr, either(find_nth_char(lhs, 0, '\t', key_width), (const char*)(lhs.ptr + lhs.size)) - lhs.ptr);
     slice_t rpfx(rhs.ptr, either(find_nth_char(rhs, 0, '\t', key_width), (const char*)(rhs.ptr + rhs.size)) - rhs.ptr);
-//    std::cout << "less(" << lpfx << "," << rpfx << ")" << std::endl;
+    //std::cout << "less(" << lpfx << "," << rpfx << ")" << std::endl;
     return operator < (lpfx, rpfx);
   }
   size_t key_width;

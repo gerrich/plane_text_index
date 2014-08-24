@@ -41,7 +41,7 @@ inline void *memrchr(void* data, char ch, size_t size) {
 // look for lb in sorted file
 template <typename less_t> 
 slice_t lower_bound_line_naive(char *data, size_t size, const slice_t &word, less_t &less)  {
-  std::cout << "NAIVE: " << size << std::endl;
+  //std::cout << "NAIVE: " << size << std::endl;
   char* it = data;
   char* end = advance(data, size);
   for(;it != end ;) {

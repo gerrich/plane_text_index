@@ -1,25 +1,17 @@
 #include "bi-stat-loader.hpp"
 #include "action-io.hpp"
-
+#include "bi-stat-score-provider.hpp"
 #include <iostream>
 
 struct bi_stat_action_t {
-  bi_stat_action_t(const mmap_t &_stat_map, const mmap_t &_index_map)
-    :stat_map(_stat_map)
-    ,index_map(_index_map) {}
-
+  bi_stat_action_t(const bi_stat_score_calc_t &_score_calc)
+    :score_calc(_score_calc)
+  {}
   void operator() (const std::string &w1, const std::string &w2) const {
-    slice_t stat1 = get_stat(stat_map, index_map, w1); 
-    slice_t stat2 = get_stat(stat_map, index_map, w2);
-  
-    //std::cout << "stat1: " << stat1 << std::endl;
-    //std::cout << "stat2: " << stat2 << std::endl;
-
-    double score = calc_similarity_score_slow(stat1, stat2);
+    double score = score_calc.calc_score(w1, w2);
     std::cout << w1 << "\t" << w2 << "\t" << score << std::endl;
   }
-  const mmap_t &stat_map;
-  const mmap_t &index_map;
+  const bi_stat_score_calc_t &score_calc;
 };
 
 int main(int argc, const char **argv) {
@@ -42,7 +34,8 @@ int main(int argc, const char **argv) {
   //size_t lcount = calc_lines(map.data, map.size);
   //std::cout << "lcount: " << lcount << std::endl;
 
-  bi_stat_action_t action(stat_map, index_map);
+  bi_stat_score_calc_t score_calc(stat_map, index_map);
+  bi_stat_action_t action(score_calc);
   process_2str(std::cin, action); 
 
   if (stat_map.free()) {
