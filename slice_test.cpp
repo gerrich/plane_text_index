@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+#include "gtest/gtest.h"
 
 #include "slice.hpp"
 #include "slice-tools.hpp"
