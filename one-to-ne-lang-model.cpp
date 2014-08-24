@@ -1,6 +1,7 @@
 #include "bi-stat-loader.hpp"
 #include "action-io.hpp"
 #include "slice-tools.hpp"
+#include "algo.hpp"
 
 #include <iostream>
 
