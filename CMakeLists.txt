@@ -22,5 +22,11 @@ add_executable(${TEST_NAME} ${TEST_SOURCES})
 target_link_libraries(${TEST_NAME} gtest gtest_main pthread )
 add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 
+set(TEST_NAME vector-tools-test)
+set(TEST_SOURCES ${TEST_NAME}.cpp)
+add_executable(${TEST_NAME} ${TEST_SOURCES})
+target_link_libraries(${TEST_NAME} gtest gtest_main pthread )
+add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
+
 
 
